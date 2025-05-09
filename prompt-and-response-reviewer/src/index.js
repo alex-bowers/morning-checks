@@ -28,17 +28,26 @@ export default {
 
 		// Use AI to improve initial response if the rank score was too low.
 		const newPrompt = `
-			You are a helpful assistant that is comparing an initial prompt and response to ensure the response is correct. Only return the new response and do not put any markdown or words around the response.
+			You are an assistant that checks if a response correctly answers a given prompt. If the response is incorrect, incomplete, or unclear, rewrite it so it fully satisfies the prompt.
 
-			Prompt: """${prompt}"""
-			Response: """${response}"""
+			Only return the corrected response. Do not include explanations, markdown, or any extra text.
 
-			Please fix the initial response to ensure it does what the initial prompt asks.
+			Prompt:
+			“””
+			${prompt}
+			“””
+
+			Response:
+			“””
+			${response}
+			“””
+
+			Fix the response if needed so it correctly answers the prompt.
 		`;
 
 		const newResult = await env.AI.run('@cf/meta/llama-3.2-3b-instruct', {
 			prompt: newPrompt,
-			max_tokens: 512
+			max_tokens: 1024
 		});
 
 		return new Response(JSON.stringify({
