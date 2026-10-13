@@ -7,10 +7,13 @@ from bs4 import BeautifulSoup, Comment
 from flask_caching import Cache
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
-load_dotenv()
+from werkzeug.middleware.proxy_fix import ProxyFix
 import time
 import os
 import random
+
+dotenv_path = "/var/www/wishlist-scraper/.env"
+load_dotenv(dotenv_path)
 
 def seconds_until_midnight():
     now = datetime.now()
@@ -18,6 +21,7 @@ def seconds_until_midnight():
     return int((midnight - now).total_seconds())
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.config["CACHE_TYPE"] = "SimpleCache"
 app.config["CACHE_DEFAULT_TIMEOUT"] = seconds_until_midnight()
 cache = Cache(app)
@@ -50,13 +54,16 @@ def get_wishlist_scraper_dom():
 
     options = Options()
     options.add_argument(f"--user-agent={random_user_agent}")
-    options.add_argument("--headless")
+    options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")            # optional, stabilizes rendering
+    options.add_argument("--window-size=1920,1080")  # ensures pages render correctly
 
-    service = Service("/usr/local/bin/chromedriver")
-    driver = webdriver.Chrome(service=service, options=options)
-
+    ##service = Service("/usr/local/bin/chromedriver")
+    ##driver = webdriver.Chrome(service=service, options=options)
+    driver = webdriver.Chrome(options=options)
+    print(WISHLIST_URL)
     driver.get(WISHLIST_URL)
     time.sleep(3)
 
